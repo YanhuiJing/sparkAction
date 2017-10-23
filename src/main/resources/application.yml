@@ -1,0 +1,162 @@
+spring:
+  profiles:
+    active: alarm-prod
+appName: data-analyzer
+appNameAlarm: studentAlarm
+kafka:
+  topics:
+    data-collect: classroom-input-text, other-input-text
+    data-report: report-input-text
+    data-action: action-input-text
+    data-attendance: svc-action
+    data-quizInfo: quiz_info
+    data-quizSubmit: quiz_submit
+    data-star: svc_star
+es:
+  user-alarm:
+    index: user-alarm-output
+    log-index: user-alarm-log-{indexDate}
+    type: doc
+  classroom-alarm:
+    index: classroom-alarm-output-{indexDate}
+    type: doc
+  org-stat:
+    index: org-stat-output-{indexDate}
+    type: doc
+
+# Properties per profile
+---
+#开发环境
+spring:
+  profiles: dev
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    sharding:
+      slave:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://java.sdb.roombox.xdf.cn:3306/sac_mgmt?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&useSSL=false&serverTimezone=CTT
+        username: sacm_mgmt
+        #        password: T8d8rdsG5ITh$xt2
+        password: mgmt_sacm
+        filters: wall,mergeStat
+        initialSize: 1
+        minIdle: 1
+        maxActive: 10
+        test-while-idle: true
+        max-wait: 60000
+        validation-query: "select 1"
+        keep-alive: true  #开启才能实现连接数不低于minIdle
+        web-stat-filter:
+          exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"   #监控过滤掉静态资源
+          session-stat-enable: false
+kafka:
+  bootstrapServers: "tc-1:9092,tc-2:9092,tc-3:9092"
+  groupId: "data-analyzer-dev"
+streaming:
+  checkpointPath: "/tmp/cp_data-analyzer-dev"
+  outputPath: "/tmp/out_data-analyzer-dev"
+  logLevel: "ERROR"
+  batchDuration: 20
+es:
+  host:
+  port: 9200
+
+---
+#测试环境
+spring:
+  profiles: test
+
+---
+#生产环境
+spring:
+  profiles: prod
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    sharding:
+      slave:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://java.sdb.roombox.xdf.cn:3306/sac_mgmt?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&useSSL=false&serverTimezone=CTT
+        username: sacm_mgmt
+        password: mgmt_sacm
+        filters: wall,mergeStat
+        initialSize: 1
+        minIdle: 1
+        maxActive: 10
+        test-while-idle: true
+        max-wait: 60000
+        validation-query: "select 1"
+        keep-alive: true  #开启才能实现连接数不低于minIdle
+        web-stat-filter:
+          exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"   #监控过滤掉静态资源
+          session-stat-enable: false
+kafka:
+  bootstrapServers: "tc-1:9092,tc-2:9092,tc-3:9092"
+  groupId: "data-analyzer-prod"
+streaming:
+  checkpointPath: "/data/tmp/cp_data-analyzer"
+  outputPath: "/data/tmp/out_data-analyzer"
+  logLevel: "ERROR"
+  batchDuration: 20
+es:
+  host: java1.es.roombox.xdf.cn
+  port: 9200
+
+---
+# 学生告警本地环境
+spring:
+  profiles: alarm-local
+mongo:
+  uri: "mongodb://test_r:passtestr@172.26.8.21:27017/test.ClassroomAlarmInfo?authSource=admin"
+redis:
+  host: "172.26.8.71"
+  port: "6379"
+  passwd: "Oix9hkuIcc5"
+kafka:
+  bootstrapServers: "172.26.8.71:9092,172.26.8.74:9092,172.26.8.72:9092"
+  sacBootstrapServers: "172.26.8.71:9092,172.26.8.74:9092,172.26.8.72:9092"
+  groupId: "alarm-local-1005"
+  consumerMode: "latest"
+streaming:
+  checkpointPath: "/Users/xdf/checkpoint/cp_alarm_local"
+  logLevel: "ERROR"
+  batchDuration: 10
+
+---
+# 学生告警开发环境
+spring:
+  profiles: alarm-dev
+mongo:
+  uri: "mongodb://test_r:passtestr@172.26.8.21:27017/test.ClassroomAlarmInfo?authSource=admin"
+redis:
+  host: "172.26.8.71"
+  port: "6379"
+  passwd: "Oix9hkuIcc5"
+kafka:
+  bootstrapServers: "172.26.8.71:9092,172.26.8.74:9092,172.26.8.72:9092"
+  sacBootstrapServers: "172.26.8.71:9092,172.26.8.74:9092,172.26.8.72:9092"
+  groupId: "alarm-dev"
+  consumerMode: "latest"
+streaming:
+  checkpointPath: "/data/tmp/cp_alarm"
+  logLevel: "ERROR"
+  batchDuration: 10
+
+---
+# 学生告警生产环境
+spring:
+  profiles: alarm-prod
+mongo:
+  uri: "mongodb://userdataprw:B8l15MOr@172.26.7.236:27017,172.26.7.150:27017,172.26.7.192:27017/prod.ClassroomAlarmInfo?replicaSet=cmgo-jr4x8m4v_0"
+redis:
+  host: "172.26.5.16"
+  port: "6379"
+  passwd: "voytAO27d@"
+kafka:
+  bootstrapServers: "172.26.5.79:9092"
+  sacBootstrapServers: "172.26.5.79:9092"
+  groupId: "alarm-prod"
+  consumerMode: "latest"
+streaming:
+  checkpointPath: "/data/tmp/cp_alarm"
+  logLevel: "ERROR"
+  batchDuration: 10
