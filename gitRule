@@ -1,0 +1,130 @@
+原则
+
+本流程参照了github公司的work flow (https://githubflow.github.io/ )
+保持master分支任何时候都是可发布的，所以任何分支merge进master都需要经过测试验证（简单的改动可以开发自测）
+用开发分支(feature or release)提测
+hotfix与普通开发流程一致，但优先进master
+多人合作一个开发分支的工作流程递归参照主流程(除提测外)。
+递归的意思：个人开发分支相当于流程中的“开发分支”，多人合作的主开发分支相当于流程中的master分支
+尽量使用git rebase来保证 Git 历史的整洁
+禁止在已经merge了的开发分支上继续工作！如有进一步改动，必须重新拉一个开发分支！
+流程
+
+创建开发分支
+从master 分支 checkout 开发分支 feature-xxx-zhw-2020xxxx
+
+git checkout master
+git pull
+git checkout -b feature-xxx-zhw-2020xxxx
+
+
+【增补 (2020/3/15)】
+
+如果开发能够按版本计划（release）上线，比如客户端开发，每一版是一个feature/bugfix的集合、且总是同时上线；或者由于测试环境资源限制，多个feature必须共享一套测试环境一起测试；则本小节标题中的“开发分支”可以即是release分支(e.g. “release-client-20200309”)。团队多人协作在此开发/release分支上工作，工作流程可递归参照主流程。
+
+要点：
+
+开发/release分支在上一个release上线之后拉取
+每个人从开发/release分支拉自己的开发子分支
+开发周期长的feature可能在此之前已经有了feature子分支，可以在开发/release分支创建后先rebase+merge到开发/release分支，然后再重新从开发/release分支拉一个新的feature子分支继续工作
+尽量使用git rebase来整合个人的工作与已merge进开发/release分支里的工作
+合并顺序：个人分支->开发/release分支->master分支
+开发/release分支一旦合并入master分支后，不再使用
+2. 在开发分支上工作
+
+2.1) 可以频繁提交并push到origin, 以保存工作成果。
+
+
+
+2.2) 开发基本完成、开发人员自测通过后，提测之前，对开发分支进行整理：
+
+a) 如果有很多小的commits：
+
+用 git rebase -i  合并为一个或少数几个commits（详见参考文献）。
+
+Tip: 如果这些commits之前已经push到origin，则需要这么做：
+
+git push (把所有local commits推到远端）
+
+git log --oneline
+
+git rebase -i HEAD~8 (其中8这个数字是commits的总数，根据实际数量修改）
+
+(或 git rebase -i aaa3303f: 其中 aaa3303f是最后一个commit: by 海峰)
+
+git push -f (覆盖远端)
+
+b) rebase master 分支(如果从拉出开发分支到此刻，没有新的commit进入master分支，可略过这一步)：
+
+git checkout master
+git pull
+git checkout feature-xxx-zhw-2020xxxx
+git rebase master
+c) 强制覆盖origin上的开发分支（前提条件是此开发分支为一个人独享，若多人合作一个分支，则不可分别强推；可以等大家都完成后由一个人来做）
+
+git push -f
+
+
+代码评审
+3.1) 在 GitLab 上创建 merge request A1:
+
+   source=feature-xxx-zhw-20200303
+
+   target=master
+
+这时如果有冲突，做2.2.b) 来解决冲突。
+
+
+
+3.2) 把merge request 提给 assignee 去review code.
+
+
+
+3.3) 如果有discussion, 在本地修改代码，提交commits, push. 直到所有discussions被 resolve.
+
+
+
+3.4) 通过评审。
+
+最后，可重做rebase -i 以合并小commits并更新origin上的开发分支，以保持历史干净。
+
+
+
+【备注(2020/3/15)】review 过程中禁止做git rebase (通过后可以git rebase -i)，否则discussions 和代码的对应关系将丢失，且会影响增量式review.
+
+
+
+用开发分支提测
+(开发分支为feature-xxx-.. 或 release-yyy-....)
+
+4.1）Jenkins job支持 build with parameters，指定开发分支.
+
+4.2）测试发现bug, 在开发分支上提交commits. 再次迭代测试。
+
+4.3）测试完成，再做rebase -i 合并bug commits(无须重测).
+
+
+
+合并代码到master分支
+5.1) 再次检查是否有代码冲突，如有，用rebase解决（必要时做一个安全回归测试）。
+
+【如果短期内有多个feature上线，大家可以商议一下排期，定一个大致的顺序进入master，避免互相影响。】
+
+
+
+5.2) code reviewer或某个有权限的人点"merge" 完成合并，A1进入master分支.
+
+
+
+5.3) 【可选】上线完成后对master打一个tag，以便万一有问题回滚方便。
+
+
+
+发布到生产环境
+
+
+
+
+【参考文献】
+
+《Git rebase：愉快的体验》：https://shimo.im/docs/GXwXyCtkVG6RxrQH/
